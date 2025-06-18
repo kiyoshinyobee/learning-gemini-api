@@ -52,7 +52,7 @@ mainApp.post('/generate-text-from-image', uploadFile.single('image'),  async (re
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {
-    fs.unlink(path);
+    fs.unlinkSync(path);
   }
 });
 
@@ -68,7 +68,23 @@ mainApp.post('/generate-text-from-document', uploadFile.single('file'),  async (
   } catch (error) {
     res.status(500).json({ error: error.message });
   } finally {
-    fs.unlink(path);
+    fs.unlinkSync(path);
+  }
+});
+
+// Route API: generate-from-audio
+mainApp.post('/generate-text-from-audio', uploadFile.single('audio'),  async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const { path, mimetype } = req.file;
+    const audioFile = getFileToGenerativePart(path, mimetype);
+    const agentJob = await aiModel.generateContent([prompt, audioFile]);
+    const agentResponse = await agentJob.response;
+    res.json({ result: agentResponse.text() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    fs.unlinkSync(path);
   }
 });
 

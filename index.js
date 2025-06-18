@@ -9,5 +9,24 @@ dotenv.config()
 const mainApp = express();
 mainApp.use(express.json());
 
-// init generate Gemini AI
-const geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// init Gemini AI
+const aiAgent = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const aiModel = aiAgent.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
+
+// Route API: generate-text
+mainApp.post('/generate-text', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const agentJob = await aiModel.generateContent(prompt);
+    const agentResponse = await agentJob.response;
+    res.json({ result: agentResponse.text() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// running express app
+const portApp = process.env.PORT;
+mainApp.listen(portApp, () => {
+  console.log(`Session 3 is running in PORT: ${portApp}`);
+});

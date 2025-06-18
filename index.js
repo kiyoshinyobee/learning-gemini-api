@@ -20,6 +20,14 @@ mainApp.use(express.json());
 const aiAgent = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const aiModel = aiAgent.getGenerativeModel({ model: 'models/gemini-2.5-flash' });
 
+// get file part
+const getFileToGenerativePart = (filePath, mimeType) => ({
+    inlineData: {
+      data: fs.readFileSync(filePath).toString('base64'),
+      mimeType: mimeType,
+    },
+  });
+
 // Route API: generate-text
 mainApp.post('/generate-text', async (req, res) => {
   try {
@@ -34,18 +42,27 @@ mainApp.post('/generate-text', async (req, res) => {
 
 // Route API: generate-from-image
 mainApp.post('/generate-text-from-image', uploadFile.single('image'),  async (req, res) => {
-  const geIimageToGenerativePart = (filePath) => ({
-    inlineData: {
-      data: fs.readFileSync(filePath).toString('base64'),
-      mimeType: 'image/png',
-    },
-  });
-
   try {
     const { prompt } = req.body;
-    const { path } = req.file;
-    const image = geIimageToGenerativePart(path);
-    const agentJob = await aiModel.generateContent([prompt, image]);
+    const { path, mimetype } = req.file;
+    const imageFile = getFileToGenerativePart(path, mimetype);
+    const agentJob = await aiModel.generateContent([prompt, imageFile]);
+    const agentResponse = await agentJob.response;
+    res.json({ result: agentResponse.text() });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  } finally {
+    fs.unlink(path);
+  }
+});
+
+// Route API: generate-from-document
+mainApp.post('/generate-text-from-document', uploadFile.single('file'),  async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const { path, mimetype } = req.file;
+    const docFile = getFileToGenerativePart(path, mimetype);
+    const agentJob = await aiModel.generateContent([prompt, docFile]);
     const agentResponse = await agentJob.response;
     res.json({ result: agentResponse.text() });
   } catch (error) {

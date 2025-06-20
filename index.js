@@ -22,11 +22,11 @@ const aiModel = aiAgent.getGenerativeModel({ model: 'models/gemini-2.5-flash' })
 
 // get file part
 const getFileToGenerativePart = (filePath, mimeType) => ({
-    inlineData: {
-      data: fs.readFileSync(filePath).toString('base64'),
-      mimeType: mimeType,
-    },
-  });
+  inlineData: {
+    data: fs.readFileSync(filePath).toString('base64'),
+    mimeType: mimeType,
+  },
+});
 
 // Route API: generate-text
 mainApp.post('/generate-text', async (req, res) => {
